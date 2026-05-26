@@ -45,4 +45,3 @@ on primary
  (
  DB1_data,20
  )
-

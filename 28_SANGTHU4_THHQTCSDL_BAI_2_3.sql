@@ -1,4 +1,4 @@
-﻿ create database ql_banhang
+ create database ql_banhang
 
  use ql_banhang
 
@@ -93,18 +93,21 @@ INSERT INTO CHITIETHD (MAHD, MAHG, SOLUONG, GIABAN) VALUES
 ('HD004', 'A04', 2, 3000),
 ('HD004', 'A07', 3, 15000);
 
+-- [SỬA LỖI 1] Đổi sum(c.giaban) thành sum(c.giaban*c.soluong)
+-- Doanh số phải tính = đơn giá × số lượng
 create view dsbh
 as 
-select h.makh,tenkh, sum(c.giaban) as doanhso
+select h.makh,tenkh, sum(c.giaban*c.soluong) as doanhso
 from khach k,hoadon h, chitiethd c
 where h.makh=k.makh and c.mahd =h.mahd
 group by  h.makh,tenkh
 
 select *from dsbh
 
+-- [SỬA LỖI 1] Tương tự, tổng giá trị hóa đơn = đơn giá × số lượng
 create view dshd
 as 
-select h.mahd, tenkh,sum( c.giaban) as tonggiatrihd
+select h.mahd, tenkh,sum(c.giaban*c.soluong) as tonggiatrihd
 from hoadon h, khach k, chitiethd c
 where h.makh=k.makh and c.mahd =h.mahd
 group by  h.mahd, tenkh
@@ -130,21 +133,32 @@ group by h.mahg,tenhg,dvt
 
 select *from dshgn
 
+-- [SỬA LỖI 1] Tổng giá trị theo tháng = đơn giá × số lượng
 create view tkgt
 as
-select month(h.ngaylap) as thang,sum( c.giaban) as tonggiatrihd
+select month(h.ngaylap) as thang,sum(c.giaban*c.soluong) as tonggiatrihd
 from hoadon h, chitiethd c
 where  c.mahd =h.mahd
 group by  month(h.ngaylap)
 
 select * from tkgt
 
+-- [SỬA LỖI 2] Lợi nhuận = (giá bán × sl bán) - (giá nhập × sl nhập)
+-- Dùng subquery để tránh tích Descartes giữa chitiethd và chitietpn
 create view tkln
 as
-select month(hd.ngaylap) as thang,sum(cthd.giaban-ctpn.gianhap) as tongloinhuan
-from chitiethd cthd, hang hg, chitietpn ctpn,hoadon hd
-where hg.mahg=ctpn.mahg and cthd.mahg=hg.mahg and hd.mahd=cthd.mahd
-group by  month(hd.ngaylap)
+select thang,
+sum(doanhso) - sum(chiphinhap) as tongloinhuan
+from (
+ select month(hd.ngaylap) as thang,
+ cthd.giaban*cthd.soluong as doanhso,
+ (select sum(ctpn.gianhap*ctpn.soluong) 
+  from chitietpn ctpn 
+  where ctpn.mahg=cthd.mahg) as chiphinhap
+ from chitiethd cthd, hoadon hd
+ where hd.mahd=cthd.mahd
+) as t
+group by thang
 
 select * from tkln
 
@@ -156,12 +170,15 @@ where tkgt.thang=tkln.thang
 
 select * from kethop
 
+-- [SỬA LỖI 3] Dùng lại 2 view dshgn và dshg để tránh tích Descartes
+-- khi join trực tiếp chitietpn và chitiethd qua hang
 create view dshgh
 as
-select hg.mahg,tenhg,dvt,sum(ctpn.soluong) as tongsln ,sum(cthd.soluong) as tongslb, sum(ctpn.soluong-cthd.soluong) as tongslconlai
-from hang hg, chitietpn ctpn, chitiethd cthd
-where hg.mahg=ctpn.mahg and cthd.mahg=hg.mahg
-group by hg.mahg,tenhg,dvt
+select n.mahg,n.tenhg,n.dvt,
+n.tongslnhap as tongsln,
+b.tongslban as tongslb,
+n.tongslnhap - b.tongslban as tongslconlai
+from dshgn n, dshg b
+where n.mahg=b.mahg
 
 select * from dshgh
-

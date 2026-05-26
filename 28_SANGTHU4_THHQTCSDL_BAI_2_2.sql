@@ -1,4 +1,4 @@
-﻿ create database ql_sinhvien
+ create database ql_sinhvien
  on primary
   (
  name=ql_sinhvien_data,
@@ -115,15 +115,18 @@ INSERT INTO KETQUA (MASV, MAMH, DIEM) VALUES
 ('SV09', 'M003', 6),
 ('SV10', 'M002', 5);
 
+-- [SỬA LỖI 1] Thêm join bảng khoa để lọc đúng theo tên khoa (tenkhoa),
+-- không phải tên lớp (tenlop)
 select sv.masv,sv.hoten
-from sinhvien sv
-join lop l on sv.malop=l.malop
-where l.tenlop=N'Công nghệ thông tin'
+from sinhvien sv, lop l, khoa kh
+where sv.malop=l.malop and l.makhoa=kh.makhoa
+and kh.tenkhoa=N'Công nghệ thông tin'
 
+-- [SỬA LỖI 2] Sửa 'SV001' thành 'SV01' cho đúng với dữ liệu đã insert
 select kq.diem
 from ketqua kq
 join sinhvien sv on sv.masv=kq.masv
-where sv.masv='SV001'
+where sv.masv='SV01'
 
 select sv.*
 from sinhvien sv  
@@ -169,9 +172,13 @@ group by  mh.mamh,mh.tenmh
 select *
 from dsmh
 
+-- [SỬA LỖI 3] Đổi count(distinct case...) thành sum(case...)
+-- count(distinct case...) luôn trả về 1 hoặc 2 vì CASE chỉ ra giá trị 0 hoặc 1
 create view dsmhlonhonnam 
 as 
-select mh.mamh,mh.tenmh,mh.sotc,count( distinct case when kq.diem>=5 then 1 else 0 end) as dat,count( distinct case when kq.diem<5 then 1 else 0 end) as rot
+select mh.mamh,mh.tenmh,mh.sotc,
+sum(case when kq.diem>=5 then 1 else 0 end) as dat,
+sum(case when kq.diem<5 then 1 else 0 end) as rot
 from sinhvien sv,ketqua kq, monhoc mh
 where sv.masv=kq.masv and kq.mamh=mh.mamh 
 group by  mh.mamh,mh.tenmh,mh.sotc
@@ -179,9 +186,14 @@ group by  mh.mamh,mh.tenmh,mh.sotc
 select *
 from dsmhlonhonnam
 
+-- [SỬA LỖI 4] Sửa gioitinh='nam' thành gioitinh=N'Nam' cho đúng với
+-- dữ liệu đã insert (dùng N'' và chữ hoa đầu)
 create view tksv
 as 
-select l.malop,tenlop,sum(case when sv.gioitinh='nam' then 1 else 0 end) as slsvnam, sum(case when sv.gioitinh= N'Nữ' then 1 else 0 end) as slsvnu, count (sv.masv) as slsv
+select l.malop,tenlop,
+sum(case when sv.gioitinh=N'Nam' then 1 else 0 end) as slsvnam,
+sum(case when sv.gioitinh=N'Nữ' then 1 else 0 end) as slsvnu,
+count(sv.masv) as slsv
 from sinhvien sv,lop l
 where l.malop=sv.malop 
 group by l.malop,tenlop
@@ -198,4 +210,3 @@ group by sv.masv,hoten
 
 select *
 from tkttsv
-
