@@ -53,9 +53,12 @@ with init
 go
 
  --b2 restore full
+ use master
+ go
+
  restore database QLBH
  from disk ='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\QLBH_full.bak'
- with norecovery
+ with norecovery, replace
  go 
  --b3 restore diff gan nhat 
  restore database QLBH
@@ -63,7 +66,7 @@ go
  with norecovery
  go
  --b4 restore log sau diff
-  restore database QLBH
+  restore log QLBH
  from disk ='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\QLBH_log_t3.trn'
  with recovery
  go

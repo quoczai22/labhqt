@@ -60,9 +60,12 @@ insert into khach values
  to disk='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\db1_log.trn'
  go
  --b2 restore full
+ use master
+ go
+
  restore database db1
  from disk ='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\db1_full.bak'
- with norecovery
+ with norecovery, replace
  go 
  --b3 restore diff gan nhat 
  restore database db1
@@ -70,7 +73,7 @@ insert into khach values
  with norecovery
  go
  --b4 restore log sau diff
-  restore database db1
+  restore log db1
  from disk ='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\db1_log.trn'
  with recovery
  go
