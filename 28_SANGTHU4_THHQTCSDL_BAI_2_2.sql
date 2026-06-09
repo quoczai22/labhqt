@@ -20,14 +20,14 @@
 
  create table khoa(
  makhoa varchar(10),
- tenkhoa nvarchar(30)
+ tenkhoa nvarchar(30),
  constraint pk_kh primary key (makhoa))
 
  create table lop(
  malop varchar(10),
  tenlop nvarchar(30),
  sisodk int,
- makhoa varchar(10)
+ makhoa varchar(10),
  constraint pk_l primary key (malop),
  constraint fk_l_kh foreign key (makhoa) references khoa (makhoa))
 
@@ -37,20 +37,20 @@
  ngsinh date,
  dchi nvarchar(30),
  gioitinh nvarchar(7),
- malop varchar(10)
+ malop varchar(10),
  constraint pk_sv primary key (masv),
  constraint fk_sv_l foreign key (malop) references lop(malop))
 
  create table monhoc(
  mamh varchar(10),
  tenmh nvarchar(30),
- sotc int
+ sotc int,
  constraint pk_mh primary key (mamh))
 
  create table ketqua(
  masv varchar(10),
  mamh varchar(10),
- diem float
+ diem float,
  constraint pk_kq primary key (masv,mamh),
  constraint fk_kq_sv foreign key (masv) references sinhvien(masv),
  constraint fk_kq_mh foreign key (mamh) references monhoc(mamh))
@@ -151,6 +151,7 @@ from sinhvien sv, lop l
 where sv.malop=l.malop 
 group by l.malop,l.tenlop 
 having count(masv)>=all(select count(masv) from sinhvien sv group by sv.malop )
+go
 
 create view dssv 
 as 
@@ -158,9 +159,11 @@ select kh.makhoa,kh.tenkhoa,count(sv.masv) as slsv
 from sinhvien sv, lop l, khoa kh
 where sv.malop=l.malop and kh.makhoa=l.makhoa
 group by kh.makhoa,kh.tenkhoa
+go
 
 select *
 from dssv
+go
 
 create view dsmh 
 as 
@@ -168,9 +171,11 @@ select mh.mamh,mh.tenmh,count(sv.masv) as slsv
 from sinhvien sv,ketqua kq, monhoc mh
 where sv.masv=kq.masv and kq.mamh=mh.mamh
 group by  mh.mamh,mh.tenmh
+go
 
 select *
 from dsmh
+go
 
 -- [SỬA LỖI 3] Đổi count(distinct case...) thành sum(case...)
 -- count(distinct case...) luôn trả về 1 hoặc 2 vì CASE chỉ ra giá trị 0 hoặc 1
@@ -182,9 +187,11 @@ sum(case when kq.diem<5 then 1 else 0 end) as rot
 from sinhvien sv,ketqua kq, monhoc mh
 where sv.masv=kq.masv and kq.mamh=mh.mamh 
 group by  mh.mamh,mh.tenmh,mh.sotc
+go
 
 select *
 from dsmhlonhonnam
+go
 
 -- [SỬA LỖI 4] Sửa gioitinh='nam' thành gioitinh=N'Nam' cho đúng với
 -- dữ liệu đã insert (dùng N'' và chữ hoa đầu)
@@ -197,16 +204,19 @@ count(sv.masv) as slsv
 from sinhvien sv,lop l
 where l.malop=sv.malop 
 group by l.malop,tenlop
+go
 
 select *
 from tksv
+go
 
 create view tkttsv
 as 
-select sv.masv,hoten,sum(mh.sotc) as tongtinchi, sum(case when kq.diem>=5 then 1 else 0 end) as tongtichluy, (sum(kq.diem*mh.sotc)/sum(mh.sotc)) as dtb
+select sv.masv,hoten,sum(mh.sotc) as tongtinchi, sum(case when kq.diem>=5 then mh.sotc else 0 end) as tongtichluy, (sum(kq.diem*mh.sotc)/sum(mh.sotc)) as dtb
 from sinhvien sv,ketqua kq , monhoc mh
 where kq.masv=sv.masv and kq.mamh =mh.mamh
 group by sv.masv,hoten
+go
 
 select *
 from tkttsv

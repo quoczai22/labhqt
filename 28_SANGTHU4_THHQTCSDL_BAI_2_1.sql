@@ -22,6 +22,10 @@ on primary
  maxsize=500mb,
  filegrowth=15%
  )
+ go
+
+ use DB1
+ go
 
  exec sp_spaceused 
 
@@ -39,6 +43,7 @@ on primary
 
  alter database DB1
  modify file (name=db1_second2,size=15mb) 
+ go
 
 
  dbcc shrinkfile 

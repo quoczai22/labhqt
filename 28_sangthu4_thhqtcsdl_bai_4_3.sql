@@ -1,4 +1,7 @@
 
+use qlhv
+go
+
 create table lophoc(
 malh varchar(10) primary key,
  tenlop nvarchar(30),
@@ -21,16 +24,18 @@ insert into lophoc values
  ('lh3', N'tieng anh 1', '20240211', '20240411', 'kh02')
 
  --log t2
- backup database qlhv
-to disk = 'E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\logqlhv.trn'
+ backup log qlhv
+to disk = 'E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\logqlhv_lh_t2.trn'
+with init
 go
 
 insert into lophoc values
  ('lh4', N'tieng anh 1', '20240211', '20240411', 'kh03')
 
  --log t3
-  backup database qlhv
-to disk = 'E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\logqlhv.trn'
+  backup log qlhv
+to disk = 'E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\logqlhv_lh_t3.trn'
+with init
 go
 
 insert into lophoc values
@@ -42,17 +47,19 @@ to disk = 'E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\diffqlh
 with differential
 go
 
+use master
+go
+
 restore database qlhv
  from disk ='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\fullqlhv.bak'
- with norecovery
+ with norecovery, replace
  go 
  --b3 restore diff gan nhat 
  restore database qlhv
  from disk ='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\diffqlhv.bak'
  with norecovery
  go
- --b4 restore log sau diff
-  restore database qlhv
- from disk ='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\logqlhv.trn'
+ --b4 phuc hoi database
+ restore database qlhv
  with recovery
  go

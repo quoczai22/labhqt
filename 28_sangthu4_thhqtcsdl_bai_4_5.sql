@@ -4,6 +4,9 @@ go
 use QLDH
 go
 
+alter database QLDH set recovery full
+go
+
 create table DONHANG
 (
     MADH varchar(10),
@@ -33,7 +36,7 @@ with init
 go
 
 insert into DONHANG values
-('DH05', N'Tap')
+('DH06', N'Tap')
 go
 
 backup database QLDH
@@ -51,9 +54,12 @@ with init
 go
 
  --b2 restore full
+ use master
+ go
+
  restore database QLDH
  from disk ='E:\LuuDuLieuSinhVien\sangthu4_thhqtcsdl\28_sangthu4_thhqtcsdl\QLDH_full.bak'
- with norecovery
+ with norecovery, replace
  go 
 
  --b3 restore diff gan nhat 

@@ -6,13 +6,13 @@
  makh varchar(10),
  tenkh nvarchar(30),
  diachi nvarchar(30),
- dienthoai varchar(10)
+ dienthoai varchar(10),
  constraint pk_kh primary key (makh))
 
  create table hoadon(
  mahd varchar(10),
  ngaylap date,
- makh varchar(10)
+ makh varchar(10),
  constraint pk_hd primary key (mahd),
  constraint fk_hd_kh foreign key (makh) references khach(makh))
 
@@ -20,14 +20,14 @@
  mahg varchar(10),
  tenhg nvarchar(30),
  dvt nvarchar (7),
- nhasx nvarchar(10)
+ nhasx nvarchar(10),
  constraint pk_hg primary key (mahg))
 
  create table chitiethd(
  mahd varchar(10),
  mahg varchar(10),
  soluong int,
- giaban float
+ giaban float,
  constraint pk_cthd primary key (mahd,mahg),
  constraint fk_cthd_hd foreign key (mahd) references hoadon(mahd),
  constraint fk_cthd_hg foreign key (mahg) references hang(mahg))
@@ -35,14 +35,14 @@
  create table phieunhap(
  mapn varchar(10),
  ngaylap date,
- mancc varchar(10)
+ mancc varchar(10),
  constraint pk_pn primary key (mapn))
 
  create table chitietpn(
  mapn varchar(10),
  mahg varchar(10),
  soluong int,
- gianhap float
+ gianhap float,
  constraint pk_ctpn primary key (mapn,mahg),
  constraint fk_ctpn_pn foreign key (mapn) references phieunhap(mapn),
  constraint fk_ctpn_hg foreign key (mahg) references hang(mahg))
@@ -92,6 +92,7 @@ INSERT INTO CHITIETHD (MAHD, MAHG, SOLUONG, GIABAN) VALUES
 ('HD004', 'A02', 4, 40000),
 ('HD004', 'A04', 2, 3000),
 ('HD004', 'A07', 3, 15000);
+go
 
 -- [SỬA LỖI 1] Đổi sum(c.giaban) thành sum(c.giaban*c.soluong)
 -- Doanh số phải tính = đơn giá × số lượng
@@ -101,8 +102,10 @@ select h.makh,tenkh, sum(c.giaban*c.soluong) as doanhso
 from khach k,hoadon h, chitiethd c
 where h.makh=k.makh and c.mahd =h.mahd
 group by  h.makh,tenkh
+go
 
 select *from dsbh
+go
 
 -- [SỬA LỖI 1] Tương tự, tổng giá trị hóa đơn = đơn giá × số lượng
 create view dshd
@@ -111,8 +114,10 @@ select h.mahd, tenkh,sum(c.giaban*c.soluong) as tonggiatrihd
 from hoadon h, khach k, chitiethd c
 where h.makh=k.makh and c.mahd =h.mahd
 group by  h.mahd, tenkh
+go
 
 select *from dshd
+go
 
 create view dshg
 as 
@@ -120,8 +125,10 @@ select h.mahg,tenhg,dvt, sum(c.soluong) as tongslban
 from hang h,chitiethd c
 where h.mahg=c.mahg
 group by h.mahg,tenhg,dvt
+go
 
 select *from dshg
+go
 
 
 create view dshgn
@@ -130,8 +137,10 @@ select h.mahg,tenhg,dvt, sum(c.soluong) as tongslnhap
 from hang h,chitietpn c
 where h.mahg=c.mahg
 group by h.mahg,tenhg,dvt
+go
 
 select *from dshgn
+go
 
 -- [SỬA LỖI 1] Tổng giá trị theo tháng = đơn giá × số lượng
 create view tkgt
@@ -140,35 +149,39 @@ select month(h.ngaylap) as thang,sum(c.giaban*c.soluong) as tonggiatrihd
 from hoadon h, chitiethd c
 where  c.mahd =h.mahd
 group by  month(h.ngaylap)
+go
 
 select * from tkgt
+go
 
 -- [SỬA LỖI 2] Lợi nhuận = (giá bán × sl bán) - (giá nhập × sl nhập)
 -- Dùng subquery để tránh tích Descartes giữa chitiethd và chitietpn
 create view tkln
 as
-select thang,
-sum(doanhso) - sum(chiphinhap) as tongloinhuan
-from (
- select month(hd.ngaylap) as thang,
- cthd.giaban*cthd.soluong as doanhso,
- (select sum(ctpn.gianhap*ctpn.soluong) 
-  from chitietpn ctpn 
-  where ctpn.mahg=cthd.mahg) as chiphinhap
- from chitiethd cthd, hoadon hd
- where hd.mahd=cthd.mahd
-) as t
-group by thang
+select month(hd.ngaylap) as thang,
+sum((cthd.giaban - isnull(gia.gianhap,0)) * cthd.soluong) as tongloinhuan
+from chitiethd cthd
+join hoadon hd on hd.mahd=cthd.mahd
+left join (
+    select mahg, avg(gianhap) as gianhap
+    from chitietpn
+    group by mahg
+) gia on gia.mahg=cthd.mahg
+group by month(hd.ngaylap)
+go
 
 select * from tkln
+go
 
 create view kethop
 as
 select tkln.thang,tkgt.tonggiatrihd,tkln.tongloinhuan
 from tkgt,tkln
 where tkgt.thang=tkln.thang
+go
 
 select * from kethop
+go
 
 -- [SỬA LỖI 3] Dùng lại 2 view dshgn và dshg để tránh tích Descartes
 -- khi join trực tiếp chitietpn và chitiethd qua hang
@@ -180,5 +193,6 @@ b.tongslban as tongslb,
 n.tongslnhap - b.tongslban as tongslconlai
 from dshgn n, dshg b
 where n.mahg=b.mahg
+go
 
 select * from dshgh
