@@ -4,9 +4,6 @@ go
 use QLDH
 go
 
-alter database QLDH set recovery full
-go
-
 create table DONHANG
 (
     MADH varchar(10),

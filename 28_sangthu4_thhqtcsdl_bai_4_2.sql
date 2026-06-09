@@ -5,9 +5,6 @@
 use qlhv
 go 
 
-alter database qlhv set recovery full
-go
-
 create table khoahoc(
 makh varchar(10) ,
 tenkh nvarchar(10),

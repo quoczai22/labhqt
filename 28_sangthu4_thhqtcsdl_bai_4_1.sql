@@ -3,9 +3,6 @@ go
 use db1
 go
 
-alter database db1 set recovery full
-go
-
 create table khach(
 makh varchar(10),
 tenkh nvarchar(30),

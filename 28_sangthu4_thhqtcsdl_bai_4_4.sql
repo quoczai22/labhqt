@@ -4,9 +4,6 @@ go
 use QLBH
 go
 
-alter database QLBH set recovery full
-go
-
 create table HOADON
 (
     MAHD varchar(10),
